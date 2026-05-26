@@ -1,0 +1,21 @@
+# Carpetas generadas
+build/
+dist/
+
+# Logs
+*.log
+
+# Archivos temporales
+*.tmp
+
+# Mac
+.DS_Store
+
+# Configuración local de NetBeans
+nbproject/private/
+
+# Tomcat
+apache-tomcat*/
+
+# Archivos compilados
+*.class
