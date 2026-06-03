@@ -4,8 +4,8 @@
 -- ============================================================
 
 INSERT INTO users (name, email, password_hash, role) VALUES
-    ('Administrador', 'admin@stockcito.local', '$2a$12$KhwVG1r.NXjqXzZWE1lTBOnYA0PoNfEfAhQyNJW8GqKc3BxNcK5fC', 'ADMIN'),
-    ('Operador Demo', 'operador@stockcito.local', '$2a$12$KhwVG1r.NXjqXzZWE1lTBOnYA0PoNfEfAhQyNJW8GqKc3BxNcK5fC', 'OPERADOR');
+    ('Administrador', 'admin@stockcito.com', '$2a$12$VU8LO0jvCV8UksF1E/yEPuJ5LKYZx7NyR46oFe9dfgtlpzgU0ydeu', 'ADMIN'),
+    ('Operador Demo', 'operador@stockcito.com', '$2a$12$svShiuCMAKyKhL50aKHKiOjP7/8vyrA8FRqF8TiMuHpaGPUNnjkIG', 'OPERADOR');
 
 INSERT INTO categories (name, description) VALUES
     ('Alimentos Secos', 'Granos, harinas, azucares y productos no perecederos'),

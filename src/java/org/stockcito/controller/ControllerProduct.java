@@ -83,20 +83,22 @@ public class ControllerProduct {
     }
 
     public Product update(long id, Product product) throws SQLException {
+        if (getById(id) == null) {
+            return null;
+        }
+
         String sql = """
                 UPDATE products
                 SET category_id = ?, supplier_id = ?, name = ?, sku = ?, description = ?,
-                    unit_of_measure = ?, min_stock = ?, current_stock = ?, unit_price = ?,
-                    barcode = ?, is_active = ?
-                WHERE id = ?
+                    unit_of_measure = ?, min_stock = ?, current_stock = ?, unit_price = ?, barcode = ?
+                WHERE id = ? AND is_active = TRUE
                 """;
         ConexionMysql connMysql = new ConexionMysql();
 
         try (Connection conn = connMysql.open();
              PreparedStatement pstm = conn.prepareStatement(sql)) {
             setFields(pstm, product);
-            pstm.setBoolean(11, product.isIsActive());
-            pstm.setLong(12, id);
+            pstm.setLong(11, id);
             pstm.executeUpdate();
         } finally {
             connMysql.close();

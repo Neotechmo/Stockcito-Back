@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS import_items (
     unit_of_measure VARCHAR(50),
     confidence      DECIMAL(5,4),
     raw_line        TEXT,
-    status          ENUM('PENDING', 'CONFIRMED', 'REJECTED', 'DUPLICATE') NOT NULL DEFAULT 'PENDING',
+    status          ENUM('VALID', 'WARNING', 'ERROR') NOT NULL DEFAULT 'VALID',
     duplicate_of    BIGINT,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

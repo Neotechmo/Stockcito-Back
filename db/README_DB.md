@@ -29,6 +29,17 @@ La clase `org.stockcito.connection.ConexionMysql` usa estos valores por defecto:
 
 Tambien puede leer variables de entorno: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`.
 
+La autenticacion usa `JWT_SECRET` para firmar tokens y `JWT_EXPIRATION_SECONDS`
+para configurar su vigencia. Define un `JWT_SECRET` propio fuera de desarrollo.
+
+Usuarios de desarrollo incluidos por `seed.sql`:
+
+- `admin@stockcito.com` / `admin123`
+- `operador@stockcito.com` / `operador123`
+
+Si la base ya existia antes del enum `VALID/WARNING/ERROR` de importaciones,
+ejecuta `db/migrate_import_items_status.sql` una vez.
+
 Si la API corre desde Apache Tomcat/NetBeans en tu maquina, usa `DB_HOST=127.0.0.1` o no definas `DB_HOST`.
 El nombre `stockcito-db` solo funciona para otros contenedores dentro de Docker Compose.
 

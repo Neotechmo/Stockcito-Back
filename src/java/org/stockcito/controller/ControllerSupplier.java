@@ -71,14 +71,17 @@ public class ControllerSupplier {
     }
 
     public Supplier update(long id, Supplier supplier) throws SQLException {
-        String sql = "UPDATE suppliers SET name = ?, contact_name = ?, email = ?, phone = ?, address = ?, notes = ?, is_active = ? WHERE id = ?";
+        if (getById(id) == null) {
+            return null;
+        }
+
+        String sql = "UPDATE suppliers SET name = ?, contact_name = ?, email = ?, phone = ?, address = ?, notes = ? WHERE id = ? AND is_active = TRUE";
         ConexionMysql connMysql = new ConexionMysql();
 
         try (Connection conn = connMysql.open();
              PreparedStatement pstm = conn.prepareStatement(sql)) {
             setFields(pstm, supplier);
-            pstm.setBoolean(7, supplier.isIsActive());
-            pstm.setLong(8, id);
+            pstm.setLong(7, id);
             pstm.executeUpdate();
         } finally {
             connMysql.close();

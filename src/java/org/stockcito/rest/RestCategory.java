@@ -1,6 +1,5 @@
 package org.stockcito.rest;
 
-import com.google.gson.Gson;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -16,9 +15,7 @@ import org.stockcito.model.ApiMessage;
 import org.stockcito.model.Category;
 
 @Path("v1/categories")
-public class RestCategory {
-
-    private final Gson gson = new Gson();
+public class RestCategory extends RestSupport {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -101,18 +98,5 @@ public class RestCategory {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
-    }
-
-    private Response badRequest(String message) {
-        return Response.status(Response.Status.BAD_REQUEST).entity(gson.toJson(new ApiMessage(message))).build();
-    }
-
-    private Response notFound(String message) {
-        return Response.status(Response.Status.NOT_FOUND).entity(gson.toJson(new ApiMessage(message))).build();
-    }
-
-    private Response error(Exception e) {
-        e.printStackTrace();
-        return Response.serverError().entity(gson.toJson(new ApiMessage("Error interno del servidor"))).build();
     }
 }

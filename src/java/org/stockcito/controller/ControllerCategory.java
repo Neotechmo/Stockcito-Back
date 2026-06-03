@@ -50,19 +50,25 @@ public class ControllerCategory {
     }
 
     public Category save(Category category) throws SQLException {
-        String sql = "INSERT INTO categories (name, description) VALUES (?, ?)";
         ConexionMysql connMysql = new ConexionMysql();
 
-        try (Connection conn = connMysql.open();
-             PreparedStatement pstm = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            pstm.setString(1, category.getName());
-            pstm.setString(2, category.getDescription());
-            pstm.executeUpdate();
-
-            try (ResultSet rs = pstm.getGeneratedKeys()) {
-                if (rs.next()) {
-                    category.setId(rs.getLong(1));
+        try (Connection conn = connMysql.open()) {
+            conn.setAutoCommit(false);
+            try {
+                Category existing = getByName(conn, category.getName());
+                if (existing != null) {
+                    if (existing.isIsActive()) {
+                        throw new IllegalArgumentException("Ya existe una categoria activa con ese nombre");
+                    }
+                    reactivate(conn, existing.getId(), category);
+                    category.setId(existing.getId());
+                } else {
+                    insert(conn, category);
                 }
+                conn.commit();
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
             }
         } finally {
             connMysql.close();
@@ -71,16 +77,51 @@ public class ControllerCategory {
         return getById(category.getId());
     }
 
+    private void insert(Connection conn, Category category) throws SQLException {
+        String sql = "INSERT INTO categories (name, description) VALUES (?, ?)";
+        try (PreparedStatement pstm = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            pstm.setString(1, category.getName().trim());
+            pstm.setString(2, category.getDescription());
+            pstm.executeUpdate();
+            try (ResultSet rs = pstm.getGeneratedKeys()) {
+                if (rs.next()) category.setId(rs.getLong(1));
+            }
+        }
+    }
+
+    private void reactivate(Connection conn, long id, Category category) throws SQLException {
+        String sql = "UPDATE categories SET name = ?, description = ?, is_active = TRUE WHERE id = ?";
+        try (PreparedStatement pstm = conn.prepareStatement(sql)) {
+            pstm.setString(1, category.getName().trim());
+            pstm.setString(2, category.getDescription());
+            pstm.setLong(3, id);
+            pstm.executeUpdate();
+        }
+    }
+
+    private Category getByName(Connection conn, String name) throws SQLException {
+        String sql = "SELECT * FROM categories WHERE LOWER(name) = LOWER(?) FOR UPDATE";
+        try (PreparedStatement pstm = conn.prepareStatement(sql)) {
+            pstm.setString(1, name.trim());
+            try (ResultSet rs = pstm.executeQuery()) {
+                return rs.next() ? fill(rs) : null;
+            }
+        }
+    }
+
     public Category update(long id, Category category) throws SQLException {
-        String sql = "UPDATE categories SET name = ?, description = ?, is_active = ? WHERE id = ?";
+        if (getById(id) == null) {
+            return null;
+        }
+
+        String sql = "UPDATE categories SET name = ?, description = ? WHERE id = ? AND is_active = TRUE";
         ConexionMysql connMysql = new ConexionMysql();
 
         try (Connection conn = connMysql.open();
              PreparedStatement pstm = conn.prepareStatement(sql)) {
             pstm.setString(1, category.getName());
             pstm.setString(2, category.getDescription());
-            pstm.setBoolean(3, category.isIsActive());
-            pstm.setLong(4, id);
+            pstm.setLong(3, id);
             pstm.executeUpdate();
         } finally {
             connMysql.close();
