@@ -1,0 +1,36 @@
+{
+    "Version": "2008-10-17",
+    "Id": "__default_policy_ID",
+    "Statement": [
+        {
+            "Sid": "allow_s3_publish",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "s3.amazonaws.com"
+            },
+            "Action": "SNS:Publish",
+            "Resource": "arn:aws:sns:us-east-1:471112909300:Snow-Hosp-S3-Events",
+            "Condition": {
+                "StringEquals": {
+                    "AWS:SourceAccount": "471112909300"
+                },
+                "ArnLike": {
+                    "aws:SourceArn": "arn:aws:s3:::bucket-dtwh"
+                }
+            }
+        },
+        {
+            "Sid": "1",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::785013739858:user/mwvt1000-s"
+            },
+            "Action": [
+                "sns:Subscribe"
+            ],
+            "Resource": [
+                "arn:aws:sns:us-east-1:471112909300:Snow-Hosp-S3-Events"
+            ]
+        }
+    ]
+}

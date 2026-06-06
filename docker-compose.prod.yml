@@ -1,0 +1,12 @@
+services:
+  stockcito-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: stockcito-api:latest
+    container_name: stockcito-api
+    restart: unless-stopped
+    env_file:
+      - ${ENV_FILE:-.env.prod}
+    ports:
+      - "127.0.0.1:8080:8080"

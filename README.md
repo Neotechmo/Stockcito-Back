@@ -408,6 +408,25 @@ JWT_EXPIRATION_SECONDS
 En desarrollo existen valores predeterminados. Para cualquier despliegue real
 es obligatorio definir un `JWT_SECRET` privado.
 
+## Despliegue Docker En AWS
+
+El despliegue recomendado para producción ligera es Docker en EC2 con RDS MySQL
+y NGINX/HTTPS.
+
+Archivos principales:
+
+- `Dockerfile`: construye `Stockcito.war` y lo corre en Tomcat 11.
+- `docker-compose.prod.yml`: levanta el contenedor de la API en EC2.
+- `.env.prod.example`: plantilla de variables para RDS y JWT.
+- `deploy/aws-ec2-docker.md`: guía paso a paso para AWS.
+
+Comando base en EC2:
+
+```bash
+cp .env.prod.example .env.prod
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+```
+
 ## Solución de problemas
 
 ### `401 Token JWT ausente o invalido`

@@ -10,6 +10,60 @@
 <project name="Stockcito" default="default" basedir=".">
     <description>Builds, tests, and runs the project Stockcito.</description>
     <import file="nbproject/build-impl.xml"/>
+
+    <property name="src.dir" value="src/java"/>
+    <property name="web.docbase.dir" value="web"/>
+    <property name="lib.dir" value="${web.docbase.dir}/WEB-INF/lib"/>
+    <property name="dist.dir" value="dist"/>
+    <property name="war.name" value="Stockcito.war"/>
+    <property name="dist.war" value="${dist.dir}/${war.name}"/>
+    <property name="javac.source" value="21"/>
+    <property name="javac.target" value="21"/>
+    <property name="javac.debug" value="true"/>
+    <property name="jar.compress" value="false"/>
+    <property name="source.encoding" value="UTF-8"/>
+    <property name="docker.build.dir" value="build/docker-war"/>
+    <property name="docker.libs.dir" value="docker-libs"/>
+
+    <target name="docker-clean">
+        <delete dir="${docker.build.dir}"/>
+        <delete file="${dist.war}"/>
+    </target>
+
+    <target name="docker-war" depends="docker-clean" description="Builds Stockcito.war without NetBeans-local library paths.">
+        <mkdir dir="${docker.build.dir}/WEB-INF/classes"/>
+        <mkdir dir="${docker.build.dir}/WEB-INF/lib"/>
+        <mkdir dir="${dist.dir}"/>
+
+        <copy todir="${docker.build.dir}">
+            <fileset dir="${web.docbase.dir}" excludes="WEB-INF/lib/**"/>
+        </copy>
+
+        <copy todir="${docker.build.dir}/WEB-INF/lib">
+            <fileset dir="${docker.libs.dir}" includes="*.jar"/>
+            <fileset dir="${lib.dir}" includes="*.jar"/>
+        </copy>
+
+        <javac srcdir="${src.dir}"
+               destdir="${docker.build.dir}/WEB-INF/classes"
+               source="${javac.source}"
+               target="${javac.target}"
+               encoding="${source.encoding}"
+               includeantruntime="false"
+               debug="${javac.debug}">
+            <classpath>
+                <fileset dir="${docker.build.dir}/WEB-INF/lib" includes="*.jar"/>
+            </classpath>
+        </javac>
+
+        <copy todir="${docker.build.dir}/WEB-INF/classes">
+            <fileset dir="${src.dir}" excludes="**/*.java"/>
+        </copy>
+
+        <jar compress="${jar.compress}" jarfile="${dist.war}">
+            <fileset dir="${docker.build.dir}"/>
+        </jar>
+    </target>
     <!--
 
     There exist several targets which are by default empty and which can be 
