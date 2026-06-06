@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import org.stockcito.config.EnvConfig;
 import org.stockcito.model.User;
 
 public class JwtService {
@@ -61,16 +62,10 @@ public class JwtService {
     }
 
     private String getSecret() {
-        String secret = System.getenv("JWT_SECRET");
-        return secret == null || secret.isBlank() ? "stockcito-cambiar-esta-clave-en-produccion-2026" : secret;
+        return EnvConfig.get("JWT_SECRET", "stockcito-cambiar-esta-clave-en-produccion-2026");
     }
 
     private long getExpirationSeconds() {
-        String value = System.getenv("JWT_EXPIRATION_SECONDS");
-        try {
-            return value == null ? 86400L : Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            return 86400L;
-        }
+        return EnvConfig.getLong("JWT_EXPIRATION_SECONDS", 86400L);
     }
 }

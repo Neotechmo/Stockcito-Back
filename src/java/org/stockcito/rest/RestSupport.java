@@ -16,6 +16,10 @@ abstract class RestSupport {
         return Response.status(Response.Status.NOT_FOUND).entity(gson.toJson(new ApiMessage(message))).build();
     }
 
+    protected Response serviceUnavailable(String message) {
+        return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity(gson.toJson(new ApiMessage(message))).build();
+    }
+
     protected Response error(Exception e) {
         if (e instanceof IllegalArgumentException) return badRequest(e.getMessage());
         e.printStackTrace();

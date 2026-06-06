@@ -3,17 +3,18 @@ package org.stockcito.connection;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import org.stockcito.config.EnvConfig;
 
 public class ConexionMysql {
 
     private Connection conn;
 
     public Connection open() throws SQLException {
-        String host = getConfig("DB_HOST", "127.0.0.1");
-        String port = getConfig("DB_PORT", "3306");
-        String dbName = getConfig("DB_NAME", "stockcito_db");
-        String user = getConfig("DB_USER", "stockcito");
-        String password = getConfig("DB_PASSWORD", "stockcito123");
+        String host = EnvConfig.get("DB_HOST", "127.0.0.1");
+        String port = EnvConfig.get("DB_PORT", "3306");
+        String dbName = EnvConfig.get("DB_NAME", "stockcito_db");
+        String user = EnvConfig.get("DB_USER", "stockcito");
+        String password = EnvConfig.get("DB_PASSWORD", "stockcito123");
 
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -57,16 +58,4 @@ public class ConexionMysql {
         return DriverManager.getConnection(url + parametros, user, password);
     }
 
-    private String getConfig(String key, String defaultValue) {
-        String value = System.getProperty(key);
-        if (value != null && !value.isBlank()) {
-            return value;
-        }
-        return getEnv(key, defaultValue);
-    }
-
-    private String getEnv(String key, String defaultValue) {
-        String value = System.getenv(key);
-        return value == null || value.isBlank() ? defaultValue : value;
-    }
 }

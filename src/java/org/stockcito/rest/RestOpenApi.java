@@ -24,7 +24,7 @@ public class RestOpenApi {
               "tags": [
                 {"name": "Auth"}, {"name": "Users"}, {"name": "Categories"},
                 {"name": "Suppliers"}, {"name": "Products"}, {"name": "Inventory"},
-                {"name": "Purchase Requests"}, {"name": "Imports"}
+                {"name": "Purchase Requests"}, {"name": "Imports"}, {"name": "AI"}
               ],
               "security": [{"bearerAuth": []}],
               "components": {
@@ -42,7 +42,8 @@ public class RestOpenApi {
                   "Created": {"description": "Recurso creado"},
                   "BadRequest": {"description": "Petición inválida"},
                   "Unauthorized": {"description": "Token JWT ausente o inválido"},
-                  "NotFound": {"description": "Recurso no encontrado"}
+                  "NotFound": {"description": "Recurso no encontrado"},
+                  "ServiceUnavailable": {"description": "Servicio externo no disponible o no configurado"}
                 },
                 "schemas": {
                   "LoginRequest": {
@@ -155,6 +156,18 @@ public class RestOpenApi {
                       "aiModel": {"type": "string", "nullable": true},
                       "notes": {"type": "string", "example": "Importación de prueba"},
                       "items": {"type": "array", "items": {"$ref": "#/components/schemas/ImportItemRequest"}}
+                    }
+                  },
+                  "SummaryRequest": {
+                    "type": "object",
+                    "properties": {
+                      "daysBack": {"type": "integer", "minimum": 1, "maximum": 365, "example": 30, "description": "Dias recientes para analizar salidas y entradas"},
+                      "lowStockLimit": {"type": "integer", "minimum": 1, "maximum": 25, "example": 8, "description": "Cantidad maxima de productos con stock bajo a enviar a la IA"},
+                      "highExitLimit": {"type": "integer", "minimum": 1, "maximum": 25, "example": 8, "description": "Cantidad maxima de productos con mas salidas a analizar"},
+                      "slowMovementDays": {"type": "integer", "minimum": 1, "maximum": 365, "example": 60, "description": "Dias sin salidas para considerar un producto de poco movimiento"},
+                      "slowMovementLimit": {"type": "integer", "minimum": 1, "maximum": 25, "example": 8, "description": "Cantidad maxima de productos con poco movimiento a analizar"},
+                      "maxSentences": {"type": "integer", "minimum": 1, "maximum": 10, "example": 3},
+                      "language": {"type": "string", "example": "español"}
                     }
                   }
                 }
@@ -271,6 +284,13 @@ public class RestOpenApi {
                 },
                 "/v1/imports/{id}/cancel": {
                   "post": {"tags": ["Imports"], "summary": "Cancelar importación", "parameters": [{"$ref": "#/components/parameters/Id"}], "responses": {"200": {"$ref": "#/components/responses/Ok"}}}
+                },
+                "/v1/ai/summaries": {
+                  "post": {
+                    "tags": ["AI"], "summary": "Generar alertas y recomendaciones de inventario con OpenAI",
+                    "requestBody": {"required": false, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SummaryRequest"}}}},
+                    "responses": {"200": {"$ref": "#/components/responses/Ok"}, "400": {"$ref": "#/components/responses/BadRequest"}, "401": {"$ref": "#/components/responses/Unauthorized"}, "503": {"$ref": "#/components/responses/ServiceUnavailable"}}
+                  }
                 }
               }
             }

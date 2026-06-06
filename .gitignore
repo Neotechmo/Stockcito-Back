@@ -5,6 +5,10 @@ dist/
 # Logs
 *.log
 
+# Variables locales y secretos
+.env
+.env.prod
+
 # Archivos temporales
 *.tmp
 
@@ -19,3 +23,5 @@ apache-tomcat*/
 
 # Archivos compilados
 *.class
+
+aws.json

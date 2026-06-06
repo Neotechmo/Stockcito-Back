@@ -63,6 +63,8 @@ DB_USER=stockcito
 DB_PASSWORD=<password-segura>
 JWT_SECRET=<clave-larga-segura>
 JWT_EXPIRATION_SECONDS=86400
+OPENAI_API_KEY=<api-key-openai>
+OPENAI_MODEL=gpt-4.1-mini
 ```
 
 No subir `.env.prod` al repositorio.

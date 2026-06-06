@@ -384,6 +384,7 @@ Authorization: Bearer {{token}}
 | Inventario | `GET /v1/inventory` |
 | Solicitudes | CRUD `/v1/purchase-requests`, `PATCH /{id}/status` |
 | Importaciones | `GET /v1/imports`, preview, confirm y cancel |
+| AI | `POST /v1/ai/summaries` |
 
 Todas las rutas de la tabla deben agregarse después de:
 
@@ -391,9 +392,10 @@ Todas las rutas de la tabla deben agregarse después de:
 http://localhost:8080/Stockcito/api
 ```
 
-## Configuración opcional
+## Configuración
 
-La conexión y JWT pueden configurarse mediante variables de entorno:
+La conexión, JWT y OpenAI pueden configurarse mediante variables de entorno o
+mediante un archivo `.env` en la raíz del proyecto:
 
 ```text
 DB_HOST
@@ -403,10 +405,83 @@ DB_USER
 DB_PASSWORD
 JWT_SECRET
 JWT_EXPIRATION_SECONDS
+OPENAI_API_KEY
+OPENAI_MODEL
 ```
 
-En desarrollo existen valores predeterminados. Para cualquier despliegue real
-es obligatorio definir un `JWT_SECRET` privado.
+Para desarrollo local con NetBeans:
+
+```bash
+cp .env.example .env
+```
+
+Editar `.env` y colocar los valores reales. El archivo `.env` no debe subirse
+al repositorio porque contiene secretos.
+
+La prioridad de configuración es:
+
+```text
+1. Propiedades JVM, por ejemplo -DOPENAI_API_KEY=...
+2. Variables de entorno del sistema
+3. Archivo .env
+4. Valores predeterminados de desarrollo
+```
+
+Si NetBeans/Tomcat se ejecuta desde otra carpeta y no encuentra `.env`, puede
+indicarse la ruta exacta con:
+
+```text
+-DSTOCKCITO_ENV_FILE=/ruta/completa/al/proyecto/.env
+```
+
+Para cualquier despliegue real es obligatorio definir un `JWT_SECRET` privado.
+
+## Alertas De Inventario Con GPT
+
+La API incluye un endpoint protegido que consulta la base de datos y usa OpenAI
+para generar recomendaciones operativas de inventario. No se le manda un texto
+libre: Stockcito arma el contexto con productos bajo mínimo, productos con
+muchas salidas y productos con pocas o nulas salidas recientes.
+
+```http
+POST {{baseUrl}}/v1/ai/summaries
+Authorization: Bearer {{token}}
+Content-Type: application/json
+```
+
+Body opcional:
+
+```json
+{
+  "daysBack": 30,
+  "lowStockLimit": 8,
+  "highExitLimit": 8,
+  "slowMovementDays": 60,
+  "slowMovementLimit": 8,
+  "maxSentences": 5,
+  "language": "español"
+}
+```
+
+También puede enviarse `{}` para usar los valores predeterminados.
+
+Respuesta:
+
+```json
+{
+  "summary": "Hay stock bajo de Arroz Blanco: quedan 2 kg y el minimo es 10 kg, conviene comprar mas. Bebidas tuvo muchas salidas en los ultimos 30 dias, revisa proveedor y reposicion. Papel bond no registra salidas recientes, revisa bodega para evitar caducidad o sobreinventario.",
+  "model": "gpt-4.1-mini"
+}
+```
+
+Configuración requerida:
+
+```text
+OPENAI_API_KEY=tu_api_key
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+`OPENAI_MODEL` es opcional; si no se define, usa `gpt-4.1-mini`.
 
 ## Despliegue Docker En AWS
 
