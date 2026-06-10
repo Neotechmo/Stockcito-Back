@@ -56,6 +56,7 @@ public class ControllerImportJob {
         try (Connection conn = mysql.open()) {
             conn.setAutoCommit(false);
             try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                releaseCancelledFileHash(conn, job.getFileHash());
                 ps.setLong(1, job.getUserId()); ps.setString(2, defaultSource(job.getSourceType()));
                 ps.setString(3, job.getSourceFilename()); ps.setString(4, job.getFileHash());
                 ps.setString(5, job.getRawText()); ps.setString(6, job.getAiModel()); ps.setString(7, job.getNotes());
@@ -116,8 +117,25 @@ public class ControllerImportJob {
         if (job == null) return null;
         if (job.getStatus() == ImportStatus.CONFIRMED) throw new IllegalArgumentException("Una importacion confirmada no se puede cancelar");
         ConexionMysql mysql = new ConexionMysql();
-        try (Connection conn = mysql.open(); PreparedStatement ps = conn.prepareStatement("UPDATE import_jobs SET status='CANCELLED' WHERE id=?")) {
-            ps.setLong(1, id); ps.executeUpdate();
+        String sql = """
+            UPDATE import_jobs
+            SET status='CANCELLED',
+                file_hash=CASE
+                    WHEN file_hash IS NULL OR file_hash='' THEN file_hash
+                    WHEN file_hash LIKE 'cancelled-%' THEN file_hash
+                    ELSE ?
+                END
+            WHERE id=?
+            """;
+        try (Connection conn = mysql.open(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            String releasedHash = cancelledFileHash(id);
+            ps.setString(1, releasedHash);
+            ps.setLong(2, id);
+            ps.executeUpdate();
+            LOGGER.info("Importacion cancelada: id=" + id
+                    + ", userId=" + job.getUserId()
+                    + ", fileHashOriginal=" + safe(job.getFileHash())
+                    + ", fileHashLiberado=" + releasedHash);
         } finally { mysql.close(); }
         return getById(id);
     }
@@ -184,6 +202,35 @@ public class ControllerImportJob {
     }
 
     private String defaultSource(String source) { return source == null || source.isBlank() ? "MANUAL" : source.toUpperCase(); }
+
+    private void releaseCancelledFileHash(Connection conn, String fileHash) throws SQLException {
+        if (fileHash == null || fileHash.isBlank()) return;
+
+        String selectSql = "SELECT id,user_id FROM import_jobs WHERE file_hash=? AND status='CANCELLED'";
+        try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
+            ps.setString(1, fileHash);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return;
+                long cancelledId = rs.getLong("id");
+                long cancelledUserId = rs.getLong("user_id");
+                String releasedHash = cancelledFileHash(cancelledId);
+                try (PreparedStatement update = conn.prepareStatement("UPDATE import_jobs SET file_hash=? WHERE id=?")) {
+                    update.setString(1, releasedHash);
+                    update.setLong(2, cancelledId);
+                    update.executeUpdate();
+                }
+                LOGGER.info("Hash de importacion cancelada liberado antes de reimportar: id="
+                        + cancelledId
+                        + ", userId=" + cancelledUserId
+                        + ", fileHashOriginal=" + safe(fileHash)
+                        + ", fileHashLiberado=" + releasedHash);
+            }
+        }
+    }
+
+    private String cancelledFileHash(long id) {
+        return "cancelled-" + id;
+    }
 
     private boolean isDuplicateFileHash(SQLException e) {
         String message = e.getMessage();

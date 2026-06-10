@@ -389,7 +389,7 @@ Campos principales:
 | `userId` | Sí | ID del usuario que hace la importación. |
 | `sourceType` | No | `PDF`, `IMAGE`, `CSV` o `MANUAL`. Si falta usa `MANUAL`. |
 | `sourceFilename` | No | Nombre del ticket/archivo mostrado al usuario. |
-| `fileHash` | No | Hash opcional para evitar duplicados de archivo. |
+| `fileHash` | No | Hash opcional para evitar duplicados de archivo. Si la importacion se cancela, el backend libera este hash para permitir reimportar el mismo archivo. |
 | `rawText` | No | Texto completo detectado del ticket. Sirve como evidencia, no crea items por sí solo. |
 | `aiModel` | No | Modelo o método usado por el front para extraer líneas. |
 | `notes` | No | Observaciones del usuario. |

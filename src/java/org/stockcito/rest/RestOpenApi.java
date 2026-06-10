@@ -154,7 +154,7 @@ public class RestOpenApi {
                       "userId": {"type": "integer", "format": "int64", "example": 1},
                       "sourceType": {"type": "string", "enum": ["PDF", "IMAGE", "CSV", "MANUAL"], "example": "IMAGE"},
                       "sourceFilename": {"type": "string", "example": "ticket_20260609_174639.jpg"},
-                      "fileHash": {"type": "string", "nullable": true, "example": "hash-opcional-del-archivo"},
+                      "fileHash": {"type": "string", "nullable": true, "example": "hash-opcional-del-archivo", "description": "Hash opcional para evitar duplicados. Si la importacion se cancela, el backend libera este hash para permitir reimportar el mismo archivo."},
                       "rawText": {"type": "string", "nullable": true, "example": "2 BOCADILLO JAMON IB 3.95 7.90\\n2 HORNAZO, RACION 4.90 9.80", "description": "Texto completo detectado del ticket. No reemplaza items[]."},
                       "aiModel": {"type": "string", "nullable": true, "example": "ocr-local-o-gpt-4.1-mini"},
                       "notes": {"type": "string", "example": "Ticket de compra escaneado desde iOS"},
