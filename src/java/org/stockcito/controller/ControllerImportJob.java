@@ -5,9 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import org.stockcito.connection.ConexionMysql;
 import org.stockcito.model.ImportItem;
 import org.stockcito.model.ImportItemStatus;
@@ -17,6 +19,9 @@ import org.stockcito.model.InventoryMovement;
 import org.stockcito.model.MovementType;
 
 public class ControllerImportJob {
+
+    private static final Logger LOGGER = Logger.getLogger(ControllerImportJob.class.getName());
+    private static final String FILE_HASH_UNIQUE_INDEX = "idx_ij_file_hash";
 
     private static final String JOB_SELECT = """
         SELECT j.*, u.name user_name FROM import_jobs j JOIN users u ON u.id=j.user_id
@@ -58,6 +63,20 @@ public class ControllerImportJob {
                 try (ResultSet rs = ps.getGeneratedKeys()) { rs.next(); job.setId(rs.getLong(1)); }
                 for (ImportItem item : job.getItems()) insertItem(conn, job.getId(), item);
                 conn.commit();
+            } catch (SQLIntegrityConstraintViolationException e) {
+                conn.rollback();
+                if (isDuplicateFileHash(e)) {
+                    logDuplicateImport(job, e);
+                    throw new DuplicateImportException(job.getFileHash(), job.getUserId(), e);
+                }
+                throw e;
+            } catch (SQLException e) {
+                conn.rollback();
+                if (isDuplicateFileHash(e)) {
+                    logDuplicateImport(job, e);
+                    throw new DuplicateImportException(job.getFileHash(), job.getUserId(), e);
+                }
+                throw e;
             } catch (Exception e) { conn.rollback(); throw e; }
         } finally { mysql.close(); }
         return getById(job.getId());
@@ -165,4 +184,22 @@ public class ControllerImportJob {
     }
 
     private String defaultSource(String source) { return source == null || source.isBlank() ? "MANUAL" : source.toUpperCase(); }
+
+    private boolean isDuplicateFileHash(SQLException e) {
+        String message = e.getMessage();
+        return message != null
+                && message.contains(FILE_HASH_UNIQUE_INDEX)
+                && (e instanceof SQLIntegrityConstraintViolationException || message.contains("Duplicate entry"));
+    }
+
+    private void logDuplicateImport(ImportJob job, SQLException e) {
+        LOGGER.warning("Importacion rechazada por duplicado: fileHash="
+                + safe(job.getFileHash())
+                + ", userId=" + job.getUserId()
+                + ", motivo=" + e.getMessage());
+    }
+
+    private String safe(String value) {
+        return value == null || value.isBlank() ? "<sin-file-hash>" : value;
+    }
 }

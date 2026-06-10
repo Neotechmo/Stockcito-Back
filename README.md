@@ -578,6 +578,37 @@ docker compose -f db/docker-compose.yml down -v
 docker compose -f db/docker-compose.yml up -d
 ```
 
+### `UnknownHostException: db-stockcito-db-1`
+
+La API está intentando conectar a MySQL usando un nombre de contenedor que no
+existe dentro de la red de `stockcito-api`.
+
+En AWS con RDS, corregir `.env.prod`:
+
+```text
+DB_HOST=<endpoint-rds>
+DB_PORT=3306
+DB_NAME=stockcito_db
+DB_USER=stockcito
+DB_PASSWORD=<password-rds>
+```
+
+No usar `db-stockcito-db-1` en producción. Ese nombre sólo aparece cuando MySQL
+se levantó con Docker Compose local.
+
+Recrear el contenedor después de editar `.env.prod`:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build --force-recreate
+docker logs stockcito-api --tail 80
+```
+
+Validar la conexión desde la EC2:
+
+```bash
+mysql -h <endpoint-rds> -u stockcito -p stockcito_db
+```
+
 ### Swagger no abre
 
 Verificar primero:

@@ -9,6 +9,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.stockcito.controller.ControllerImportJob;
+import org.stockcito.controller.DuplicateImportException;
+import org.stockcito.model.ApiMessage;
 import org.stockcito.model.ImportJob;
 
 @Path("v1/imports")
@@ -32,6 +34,8 @@ public class RestImportJob extends RestSupport {
                 return badRequest("La importacion debe contener items. El backend no procesa imagenes: el front debe enviar los productos detectados en items[].");
             }
             return Response.status(Response.Status.CREATED).entity(gson.toJson(new ControllerImportJob().preview(job))).build();
+        } catch (DuplicateImportException e) {
+            return conflict(e.getMessage(), e.getCode());
         } catch (Exception e) { return error(e); }
     }
     @POST @Path("{id}/confirm") public Response confirm(@PathParam("id") long id) {
@@ -45,5 +49,11 @@ public class RestImportJob extends RestSupport {
             ImportJob job = new ControllerImportJob().cancel(id);
             return job == null ? notFound("Importacion no encontrada") : Response.ok(gson.toJson(job)).build();
         } catch (Exception e) { return error(e); }
+    }
+
+    private Response conflict(String message, String code) {
+        return Response.status(Response.Status.CONFLICT)
+                .entity(gson.toJson(new ApiMessage(message, code)))
+                .build();
     }
 }

@@ -42,6 +42,7 @@ public class RestOpenApi {
                   "Created": {"description": "Recurso creado"},
                   "BadRequest": {"description": "Petición inválida"},
                   "Unauthorized": {"description": "Token JWT ausente o inválido"},
+                  "Conflict": {"description": "Conflicto con el estado actual del recurso"},
                   "NotFound": {"description": "Recurso no encontrado"},
                   "ServiceUnavailable": {"description": "Servicio externo no disponible o no configurado"}
                 },
@@ -278,7 +279,7 @@ public class RestOpenApi {
                   "post": {
                     "tags": ["Imports"], "summary": "Crear preview de importación",
                     "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ImportPreviewRequest"}}}},
-                    "responses": {"201": {"$ref": "#/components/responses/Created"}}
+                    "responses": {"201": {"$ref": "#/components/responses/Created"}, "400": {"$ref": "#/components/responses/BadRequest"}, "409": {"$ref": "#/components/responses/Conflict"}}
                   }
                 },
                 "/v1/imports/{id}/confirm": {
