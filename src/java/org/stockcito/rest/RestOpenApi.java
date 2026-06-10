@@ -136,26 +136,28 @@ public class RestOpenApi {
                   "ImportItemRequest": {
                     "type": "object", "required": ["productName", "quantity"],
                     "properties": {
-                      "productId": {"type": "integer", "format": "int64", "nullable": true, "example": 1},
-                      "productName": {"type": "string", "example": "Arroz Blanco 1 kg"},
-                      "movementType": {"type": "string", "enum": ["ENTRY", "EXIT"], "example": "ENTRY"},
-                      "quantity": {"type": "number", "format": "double", "exclusiveMinimum": true, "minimum": 0, "example": 5},
-                      "unitOfMeasure": {"type": "string", "example": "kg"},
-                      "confidence": {"type": "number", "format": "double", "minimum": 0, "maximum": 1, "example": 1},
-                      "rawLine": {"type": "string", "example": "Arroz Blanco 1 kg: 5"}
+                      "productId": {"type": "integer", "format": "int64", "nullable": true, "example": 1, "description": "ID del producto existente. Es necesario para confirmar movimientos VALID."},
+                      "productName": {"type": "string", "example": "Bocadillo Jamon IB"},
+                      "movementType": {"type": "string", "enum": ["ENTRY", "EXIT"], "example": "ENTRY", "description": "Para tickets de compra normalmente debe ser ENTRY."},
+                      "quantity": {"type": "number", "format": "double", "exclusiveMinimum": true, "minimum": 0, "example": 2},
+                      "unitOfMeasure": {"type": "string", "example": "pieza"},
+                      "confidence": {"type": "number", "format": "double", "minimum": 0, "maximum": 1, "example": 0.93},
+                      "rawLine": {"type": "string", "example": "2 BOCADILLO JAMON IB 3.95 7.90"},
+                      "status": {"type": "string", "enum": ["VALID", "WARNING", "ERROR"], "example": "VALID", "description": "Opcional. Si falta, el backend clasifica por productId y confidence."}
                     }
                   },
                   "ImportPreviewRequest": {
+                    "description": "El backend no procesa la imagen del ticket en este endpoint. El front debe enviar items[] con los productos detectados por OCR/IA.",
                     "type": "object", "required": ["userId", "items"],
                     "properties": {
                       "userId": {"type": "integer", "format": "int64", "example": 1},
-                      "sourceType": {"type": "string", "enum": ["PDF", "IMAGE", "CSV", "MANUAL"], "example": "MANUAL"},
-                      "sourceFilename": {"type": "string", "example": "entrada-manual"},
-                      "fileHash": {"type": "string", "nullable": true},
-                      "rawText": {"type": "string", "nullable": true},
-                      "aiModel": {"type": "string", "nullable": true},
-                      "notes": {"type": "string", "example": "Importación de prueba"},
-                      "items": {"type": "array", "items": {"$ref": "#/components/schemas/ImportItemRequest"}}
+                      "sourceType": {"type": "string", "enum": ["PDF", "IMAGE", "CSV", "MANUAL"], "example": "IMAGE"},
+                      "sourceFilename": {"type": "string", "example": "ticket_20260609_174639.jpg"},
+                      "fileHash": {"type": "string", "nullable": true, "example": "hash-opcional-del-archivo"},
+                      "rawText": {"type": "string", "nullable": true, "example": "2 BOCADILLO JAMON IB 3.95 7.90\\n2 HORNAZO, RACION 4.90 9.80", "description": "Texto completo detectado del ticket. No reemplaza items[]."},
+                      "aiModel": {"type": "string", "nullable": true, "example": "ocr-local-o-gpt-4.1-mini"},
+                      "notes": {"type": "string", "example": "Ticket de compra escaneado desde iOS"},
+                      "items": {"type": "array", "minItems": 1, "items": {"$ref": "#/components/schemas/ImportItemRequest"}}
                     }
                   },
                   "SummaryRequest": {

@@ -28,6 +28,9 @@ public class RestImportJob extends RestSupport {
         try {
             ImportJob job = gson.fromJson(json, ImportJob.class);
             if (job == null || job.getUserId() <= 0) return badRequest("El usuario es obligatorio");
+            if (job.getItems() == null || job.getItems().isEmpty()) {
+                return badRequest("La importacion debe contener items. El backend no procesa imagenes: el front debe enviar los productos detectados en items[].");
+            }
             return Response.status(Response.Status.CREATED).entity(gson.toJson(new ControllerImportJob().preview(job))).build();
         } catch (Exception e) { return error(e); }
     }

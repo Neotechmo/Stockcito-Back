@@ -328,6 +328,18 @@ Content-Type: application/json
 
 ### Previsualizar y confirmar una importación
 
+El backend no recibe la foto del ticket directamente en este endpoint. El flujo
+esperado es:
+
+```text
+1. El front toma la foto del ticket.
+2. El front extrae texto/OCR o usa IA para detectar productos y cantidades.
+3. El front transforma esas líneas en items[].
+4. El front manda items[] a POST /v1/imports/preview.
+5. El usuario revisa el preview.
+6. El front llama POST /v1/imports/{id}/confirm para crear movimientos.
+```
+
 Crear preview:
 
 ```http
@@ -339,22 +351,70 @@ Content-Type: application/json
 ```json
 {
   "userId": 1,
-  "sourceType": "MANUAL",
-  "sourceFilename": "entrada-manual",
-  "notes": "Importación de prueba",
+  "sourceType": "IMAGE",
+  "sourceFilename": "ticket_20260609_174639.jpg",
+  "fileHash": "hash-opcional-del-archivo",
+  "rawText": "2 BOCADILLO JAMON IB 3.95 7.90\n2 HORNAZO, RACION 4.90 9.80",
+  "aiModel": "ocr-local-o-gpt-4.1-mini",
+  "notes": "Ticket de compra escaneado desde iOS",
   "items": [
     {
       "productId": 1,
-      "productName": "Arroz Blanco 1 kg",
+      "productName": "Bocadillo Jamon IB",
       "movementType": "ENTRY",
-      "quantity": 5,
-      "unitOfMeasure": "kg",
-      "confidence": 1,
-      "rawLine": "Arroz Blanco 1 kg: 5"
+      "quantity": 2,
+      "unitOfMeasure": "pieza",
+      "confidence": 0.93,
+      "rawLine": "2 BOCADILLO JAMON IB 3.95 7.90",
+      "status": "VALID"
+    },
+    {
+      "productId": null,
+      "productName": "Hornazo, Racion",
+      "movementType": "ENTRY",
+      "quantity": 2,
+      "unitOfMeasure": "pieza",
+      "confidence": 0.72,
+      "rawLine": "2 HORNAZO, RACION 4.90 9.80",
+      "status": "WARNING"
     }
   ]
 }
 ```
+
+Campos principales:
+
+| Campo | Requerido | Descripción |
+|---|---:|---|
+| `userId` | Sí | ID del usuario que hace la importación. |
+| `sourceType` | No | `PDF`, `IMAGE`, `CSV` o `MANUAL`. Si falta usa `MANUAL`. |
+| `sourceFilename` | No | Nombre del ticket/archivo mostrado al usuario. |
+| `fileHash` | No | Hash opcional para evitar duplicados de archivo. |
+| `rawText` | No | Texto completo detectado del ticket. Sirve como evidencia, no crea items por sí solo. |
+| `aiModel` | No | Modelo o método usado por el front para extraer líneas. |
+| `notes` | No | Observaciones del usuario. |
+| `items` | Sí | Arreglo de productos detectados. No puede venir vacío. |
+
+Campos de cada item:
+
+| Campo | Requerido | Descripción |
+|---|---:|---|
+| `productName` | Sí | Nombre leído del ticket o seleccionado por el usuario. |
+| `quantity` | Sí | Cantidad positiva detectada. |
+| `productId` | Para confirmar | ID del producto existente en Stockcito. Si viene `null`, el preview se guarda, pero no se confirma como movimiento válido. |
+| `movementType` | No | `ENTRY` para compra/entrada o `EXIT` para salida. Si falta usa `ENTRY`. |
+| `unitOfMeasure` | No | Unidad, por ejemplo `pieza`, `kg`, `litro`. |
+| `confidence` | No | Confianza de OCR/IA entre 0 y 1. Menor a `0.75` se clasifica como `WARNING` si no mandas `status`. |
+| `rawLine` | No | Línea original del ticket para que el usuario revise. |
+| `status` | No | `VALID`, `WARNING` o `ERROR`. Si falta, el backend lo calcula. |
+
+Reglas importantes:
+
+- Si `items` no existe o viene vacío, responde `400` con error de importación sin items.
+- Cada item debe tener `productName` y `quantity` mayor a `0`.
+- Para que `confirm` cree movimientos de inventario, el item debe estar en `VALID` y tener `productId`.
+- Los items sin `productId` deben mostrarse al usuario para que los relacione con un producto existente antes de confirmar.
+- `rawText` o las “líneas detectadas” no reemplazan a `items[]`; son sólo evidencia del escaneo.
 
 Confirmar el preview y crear movimientos para sus items `VALID`:
 
